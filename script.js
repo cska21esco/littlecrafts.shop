@@ -32,5 +32,33 @@ $('#calcShipping').addEventListener('click',()=>{const zip=$('#shipZip').value.t
 $('#shipZip').addEventListener('input',()=>{shipping=null;render()});
 $('#cartBtn').addEventListener('click',()=>$('#cart').classList.add('open'));
 $('#close').addEventListener('click',()=>$('#cart').classList.remove('open'));
-$('#paypal').addEventListener('click',()=>alert('Checkout total: $'+(subtotal()+shipping+SUPPLIES_FEE).toFixed(2)+' including $'+shipping.toFixed(2)+' estimated shipping plus $3.00 shipping supplies to ZIP '+shippingZip+'. PayPal will be connected next.'));
+$('#paypal').addEventListener('click',async()=>{
+ const button=$('#paypal');
+ const original=button.textContent;
+ try{
+  button.disabled=true;button.textContent='Opening PayPal…';
+  const response=await fetch('https://littlecrafts-paypal.cska2121.workers.dev/api/orders',{
+   method:'POST',headers:{'Content-Type':'application/json'},
+   body:JSON.stringify({items:cart,zip:shippingZip})
+  });
+  const data=await response.json();
+  if(!response.ok)throw new Error(data.error||'Unable to start PayPal checkout');
+  if(data.order){
+   shipping=data.order.shipping;
+   $('#shippingDisplay').textContent='
+render();
++data.order.shipping.toFixed(2);
+   $('#suppliesDisplay').textContent='
+render();
++data.order.supplies.toFixed(2);
+   $('#total').textContent=data.order.total.toFixed(2);
+  }
+  const approve=(data.links||[]).find(link=>link.rel==='approve');
+  if(!approve||!approve.href)throw new Error('PayPal approval link was not returned');
+  window.location.href=approve.href;
+ }catch(error){
+  alert('PayPal test checkout could not start: '+error.message);
+  button.disabled=false;button.textContent=original;
+ }
+});
 render();

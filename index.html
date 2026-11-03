@@ -1,6 +1,6 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Little Crafts</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@500;700;900&family=Pacifico&display=swap" rel="stylesheet"><link rel="stylesheet" href="styles.css"></head><body>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Little Crafts</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@500;700;900&family=Pacifico&display=swap" rel="stylesheet"><link rel="stylesheet" href="styles.css"><style>.payment-status{margin:18px auto;padding:16px 22px;max-width:900px;border-radius:18px;background:#fff1f5;color:#63240f;font-weight:900;text-align:center;border:2px solid #ffd9e5}.payment-status.success{background:#e9fff4;border-color:#83d8ae}.payment-status.cancel{background:#fff7df;border-color:#e6c96f}.payment-status.error{background:#fff0f0;border-color:#e49b9b}</style></head><body>
 <header><div class="checks"></div><div class="brand"><span>Little Crafts</span><b>♡</b></div><nav><a href="#">Home</a><a href="#shop">Shop</a><a href="#about">About</a><a href="#contact">Contact</a><button id="cartBtn">🛒 Cart (<span id="cartCount">0</span>)</button></nav></header>
-<main><section class="hero modern-hero">
+<main><div id="paymentStatus" class="payment-status" hidden></div><section class="hero modern-hero">
   <div class="sparkles sparkles-left">✦<br>✧</div>
   <div class="hero-inner">
     <h1>HANDMADE CRAFTS, ART, CANDLES &amp; JARS</h1>
@@ -77,5 +77,29 @@ qs("#paypal").addEventListener("click",async()=>{
   window.location.assign(approveUrl);
  }catch(error){alert("PayPal test checkout could not start: "+error.message);button.disabled=false;button.textContent=original}
 });
+async function handlePayPalReturn(){
+ const params=new URLSearchParams(window.location.search);
+ const status=params.get("paypal");
+ const token=params.get("token");
+ if(status==="cancel"){
+  const box=qs("#paymentStatus");box.hidden=false;box.className="payment-status cancel";box.textContent="PayPal checkout was canceled. Your order was not charged.";
+  history.replaceState({},document.title,window.location.pathname);return;
+ }
+ if(status!=="success"||!token)return;
+ const box=qs("#paymentStatus");box.hidden=false;box.className="payment-status";box.textContent="Finishing your PayPal test payment...";
+ try{
+  const response=await fetch(WORKER_URL+"/api/orders/"+encodeURIComponent(token)+"/capture",{method:"POST"});
+  const data=await response.json();
+  if(!response.ok)throw new Error(data.error||"Unable to capture payment");
+  const completed=data.status==="COMPLETED";
+  box.className="payment-status "+(completed?"success":"");
+  box.textContent=completed?"Payment successful! Thank you for your Little Crafts order.":"PayPal returned the order, but payment status is "+(data.status||"unknown")+".";
+  if(completed){cart=[];shipping=null;shippingZip="";render();}
+ }catch(error){
+  box.className="payment-status error";box.textContent="We could not finish the PayPal test payment: "+error.message;
+ }
+ history.replaceState({},document.title,window.location.pathname);
+}
 render();
+handlePayPalReturn();
 </script></body></html>

@@ -72,9 +72,9 @@ qs("#paypal").addEventListener("click",async()=>{
   const data=await response.json();
   if(!response.ok)throw new Error(data.error||"Unable to start PayPal checkout");
   if(data.order){shipping=data.order.shipping;qs("#shippingDisplay").textContent=money(data.order.shipping);qs("#suppliesDisplay").textContent=money(data.order.supplies);qs("#total").textContent=Number(data.order.total).toFixed(2)}
-  const approve=(data.links||[]).find(link=>link.rel==="approve");
-  if(!approve||!approve.href)throw new Error("PayPal approval link was not returned");
-  window.location.assign(approve.href);
+  const approveUrl=data.approveUrl||((data.links||[]).find(link=>link.rel==="approve")||{}).href;
+  if(!approveUrl)throw new Error("PayPal approval link was not returned");
+  window.location.assign(approveUrl);
  }catch(error){alert("PayPal test checkout could not start: "+error.message);button.disabled=false;button.textContent=original}
 });
 render();

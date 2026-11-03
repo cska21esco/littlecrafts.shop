@@ -1,4 +1,3 @@
-const slides=['assets/inspo-cookies.jpeg','assets/inspo-cake.jpeg','assets/inspo-patterns.jpeg'];let s=0;const img=document.querySelector('#slide'),dots=[...document.querySelectorAll('.dots button')];function show(n){s=(n+slides.length)%slides.length;img.src=slides[s];dots.forEach((d,i)=>d.classList.toggle('active',i===s))}document.querySelector('.left').onclick=()=>show(s-1);document.querySelector('.right').onclick=()=>show(s+1);dots.forEach(d=>d.onclick=()=>show(+d.dataset.i));show(0);setInterval(()=>show(s+1),6000);
 const products={
 'white-daisy':{name:'White Daisy Jar',price:15},
 'pink-floral':{name:'Pink Floral Jar',price:15},

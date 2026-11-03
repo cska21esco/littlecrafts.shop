@@ -6,6 +6,7 @@ const products={
 'galaxy':{name:'Galaxy',price:12,type:'art',weight:1.5},
 'hand-painted-candle':{name:'Hand-Painted Candle',price:18,type:'candle',weight:4}
 };
+const SUPPLIES_FEE=3;
 let cart=[],shipping=null,shippingZip='';
 function subtotal(){return cart.reduce((a,id)=>a+products[id].price,0)}
 function packedWeight(){return cart.reduce((a,id)=>a+products[id].weight,0)}
@@ -24,13 +25,21 @@ function estimateShipping(zip){
  const perLb=[0,0.85,1.05,1.25,1.45,1.65][region];
  return Math.round((base+Math.max(0,w-1)*perLb)*100)/100;
 }
-window.add=(id)=>{if(cart.includes(id)){alert('This is a one-of-a-kind piece and is already in your cart.');return}cart.push(id);shipping=null;render();document.querySelector('#cart').classList.add('open')};
-window.removeItem=i=>{cart.splice(i,1);shipping=null;render()};
+window.add=(id)=>{
+ if(cart.includes(id)){alert('This is a one-of-a-kind piece and is already in your cart.');return}
+ cart.push(id);shipping=null;render();document.querySelector('#cart').classList.add('open');
+};
+window.removeItem=(i)=>{cart.splice(i,1);shipping=null;render()};
 function render(){
  document.querySelector('#cartCount').textContent=cart.length;
- document.querySelector('#items').innerHTML=cart.length?cart.map((id,i)=>`<p><strong>${products[id].name}</strong> — $${products[id].price.toFixed(2)} <button onclick="removeItem(${i})">remove</button></p>`).join(''):'<p>Your cart is empty.</p>';
- const sub=subtotal();document.querySelector('#subtotal').textContent=sub.toFixed(2);
- document.querySelector('#shippingDisplay').textContent=shipping===null?'—':'
+ document.querySelector('#items').innerHTML=cart.length
+  ?cart.map((id,i)=>`<p><strong>${products[id].name}</strong> — $${products[id].price.toFixed(2)} <button onclick="removeItem(${i})">remove</button></p>`).join('')
+  :'<p>Your cart is empty.</p>';
+ const sub=subtotal();
+ document.querySelector('#subtotal').textContent=sub.toFixed(2);
+ document.querySelector('#shippingDisplay').textContent=shipping===null?'—':'$'+shipping.toFixed(2);
+ document.querySelector('#suppliesDisplay').textContent=shipping===null?'—':'$'+SUPPLIES_FEE.toFixed(2);
+ document.querySelector('#total').textContent=(sub+(shipping===null?0:shipping+SUPPLIES_FEE)).toFixed(2);
  document.querySelector('#paypal').disabled=!cart.length||shipping===null;
 }
 document.querySelector('#calcShipping').onclick=()=>{
@@ -44,40 +53,5 @@ document.querySelector('#calcShipping').onclick=()=>{
 document.querySelector('#shipZip').addEventListener('input',()=>{shipping=null;render()});
 document.querySelector('#cartBtn').onclick=()=>document.querySelector('#cart').classList.add('open');
 document.querySelector('#close').onclick=()=>document.querySelector('#cart').classList.remove('open');
-document.querySelector('#paypal').onclick=()=>alert(`Checkout total: ${(subtotal()+shipping+3).toFixed(2)} including ${shipping.toFixed(2)} estimated shipping plus $3.00 shipping supplies to ZIP ${shippingZip}. PayPal will be connected next.`);
-render();
-+shipping.toFixed(2);
- const supplies=cart.length?3:0;
- document.querySelector('#suppliesDisplay').textContent=shipping===null?'—':'
- document.querySelector('#paypal').disabled=!cart.length||shipping===null;
-}
-document.querySelector('#calcShipping').onclick=()=>{
- const zip=document.querySelector('#shipZip').value.trim();
- const msg=document.querySelector('#shippingMsg');
- if(!/^\d{5}$/.test(zip)){shipping=null;msg.textContent='Please enter a valid 5-digit U.S. ZIP code.';render();return}
- shippingZip=zip;shipping=estimateShipping(zip);
- msg.textContent=`Estimated shipping from 95926 to ${zip} for ${packedWeight().toFixed(1)} lb packed weight.`;
- render();
-};
-document.querySelector('#shipZip').addEventListener('input',()=>{shipping=null;render()});
-document.querySelector('#cartBtn').onclick=()=>document.querySelector('#cart').classList.add('open');
-document.querySelector('#close').onclick=()=>document.querySelector('#cart').classList.remove('open');
-document.querySelector('#paypal').onclick=()=>alert(`Checkout total: $${(subtotal()+shipping).toFixed(2)} including $${shipping.toFixed(2)} estimated shipping to ZIP ${shippingZip}. PayPal will be connected next.`);
-render();
-+supplies.toFixed(2);
- document.querySelector('#total').textContent=(sub+(shipping||0)+(shipping===null?0:supplies)).toFixed(2);
- document.querySelector('#paypal').disabled=!cart.length||shipping===null;
-}
-document.querySelector('#calcShipping').onclick=()=>{
- const zip=document.querySelector('#shipZip').value.trim();
- const msg=document.querySelector('#shippingMsg');
- if(!/^\d{5}$/.test(zip)){shipping=null;msg.textContent='Please enter a valid 5-digit U.S. ZIP code.';render();return}
- shippingZip=zip;shipping=estimateShipping(zip);
- msg.textContent=`Estimated shipping from 95926 to ${zip} for ${packedWeight().toFixed(1)} lb packed weight.`;
- render();
-};
-document.querySelector('#shipZip').addEventListener('input',()=>{shipping=null;render()});
-document.querySelector('#cartBtn').onclick=()=>document.querySelector('#cart').classList.add('open');
-document.querySelector('#close').onclick=()=>document.querySelector('#cart').classList.remove('open');
-document.querySelector('#paypal').onclick=()=>alert(`Checkout total: $${(subtotal()+shipping).toFixed(2)} including $${shipping.toFixed(2)} estimated shipping to ZIP ${shippingZip}. PayPal will be connected next.`);
+document.querySelector('#paypal').onclick=()=>alert(`Checkout total: $${(subtotal()+shipping+SUPPLIES_FEE).toFixed(2)} including $${shipping.toFixed(2)} estimated shipping plus $3.00 shipping supplies to ZIP ${shippingZip}. PayPal will be connected next.`);
 render();
